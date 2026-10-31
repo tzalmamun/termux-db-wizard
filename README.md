@@ -1,161 +1,301 @@
-# Termux cPanel-style Database Wizard
+Termux DB Wizard
 
-A local-only database management panel for Android Termux. It provides a cPanel-inspired workflow:
+cPanel-Style Database Management for Android Termux
 
-- Create a MariaDB database
-- Create a database user with a password
-- Grant that user privileges on the selected database
-- List databases and local database users
-- Delete databases and users
-- Start/stop/status commands for phpMyAdmin and this wizard
+Termux DB Wizard is a lightweight, self-hosted database management tool designed for Android users running Termux.
 
-> **Important:** This is a personal local-development tool, not a replacement for cPanel. It binds to `127.0.0.1` only. Do not expose it to the public internet. Dropping a database permanently deletes its data.
+It brings a simple cPanel-style MySQL Database Wizard experience to your Android device. You can create databases, create database users, assign privileges, manage existing databases, and control your local phpMyAdmin and Database Wizard servers — all from Termux.
 
-## Requirements
+No cPanel account or hosting control panel is required.
 
-- Android with Termux (install Termux from a trusted source such as F-Droid or the official Termux GitHub)
-- MariaDB installed and initialized
-- PHP CLI with `mysqli`
-- Optional: phpMyAdmin installed in `~/phpmyadmin`
+---
 
-## Install
+What Is This Project For?
 
-Clone this repository:
+Normally, when using MariaDB in Termux, you need to run SQL commands manually to create databases, create users, assign permissions, and delete old databases.
 
-```bash
+Termux DB Wizard makes these tasks easier through a web-based control panel.
+
+It is especially useful for:
+
+- Android developers using Termux.
+- PHP developers working on local projects.
+- Users who want a cPanel-like database workflow.
+- Developers testing PHP and MySQL/MariaDB applications.
+- Users who want to manage local databases without typing SQL commands every time.
+
+Features
+
+Database Management
+
+- Create new databases.
+- Create database usernames.
+- Set and confirm database passwords.
+- Automatically assign database privileges.
+- View existing databases.
+- Delete databases.
+
+Database User Management
+
+- View local database users.
+- Create database users.
+- Delete database users.
+- Grant all privileges to a user on the newly created database.
+
+Server Controls
+
+- Start the Database Wizard.
+- Stop the Database Wizard.
+- Check server status.
+- Open the panel in your browser.
+- View server logs.
+
+phpMyAdmin Controls
+
+- Start phpMyAdmin.
+- Stop phpMyAdmin.
+- Restart phpMyAdmin.
+- Check phpMyAdmin status.
+- Open phpMyAdmin in your browser.
+- View phpMyAdmin logs.
+
+---
+
+Requirements
+
+Before installing, make sure you have:
+
+- Android device.
+- Termux.
+- PHP CLI with the "mysqli" extension.
+- MariaDB.
+- Git.
+- Curl.
+
+Optional:
+
+- phpMyAdmin installed in "~/phpmyadmin".
+
+Installation Guide
+
+Step 1: Update Termux
+
 pkg update && pkg upgrade -y
+
+Step 2: Install Required Packages
+
 pkg install git php mariadb curl nano -y
-git clone https://github.com/YOUR_GITHUB_USERNAME/termux-cpanel-db-wizard.git
-cd termux-cpanel-db-wizard
+
+Step 3: Clone This Repository
+
+git clone https://github.com/tzalmamun/termux-db-wizard.git
+
+Step 4: Enter the Project Directory
+
+cd termux-db-wizard
+
+Step 5: Give Installation Permission
+
+chmod +x install.sh
+
+Step 6: Run the Installer
+
+./install.sh
+
+Step 7: Reload Termux Configuration
+
+source ~/.bashrc
+
+Installation is complete!
+
+---
+
+MariaDB Setup
+
+If MariaDB has not been initialized before, run:
+
+mariadb-install-db
+
+Start MariaDB:
+
+mysqld_safe &
+
+Check the database connection:
+
+mariadb -h 127.0.0.1 -P 3306 -u root -e "SELECT VERSION();"
+
+If your MariaDB root account has a password, configure it in the wizard settings.
+
+Configure Admin Password
+
+Open the configuration file:
+
+nano ~/dbwizard/config.php
+
+Find:
+
+$admin_password = 'ChangeThis-Strong-Password-2026';
+
+Replace it with your own strong password.
+
+Also configure your MariaDB credentials if needed:
+
+$db_host = '127.0.0.1';
+$db_port = 3306;
+$db_admin_user = 'root';
+$db_admin_password = '';
+
+Save the file and exit.
+
+Never upload your personal "config.php" or passwords to GitHub.
+
+---
+
+How to Use
+
+Database Wizard
+
+Start the Database Wizard:
+
+dbw on
+
+Open in your browser:
+
+http://127.0.0.1:8082
+
+Stop:
+
+dbw off
+
+Check status:
+
+dbw status
+
+Open browser:
+
+dbw open
+
+View logs:
+
+dbw log
+
+phpMyAdmin
+
+Start:
+
+pma on
+
+Open:
+
+http://127.0.0.1:8081
+
+Stop:
+
+pma off
+
+Restart:
+
+pma restart
+
+Check status:
+
+pma status
+
+Open browser:
+
+pma open
+
+View logs:
+
+pma log
+
+---
+
+Default Local Addresses
+
+Service| Address
+Database Wizard| "http://127.0.0.1:8082"
+phpMyAdmin| "http://127.0.0.1:8081"
+MariaDB Host| "127.0.0.1"
+MariaDB Port| "3306"
+
+Project Structure
+
+termux-db-wizard/
+│
+├── install.sh
+├── README.md
+├── LICENSE
+│
+├── scripts/
+│   ├── dbw
+│   └── pma
+│
+└── wizard/
+    ├── index.php
+    └── config.example.php
+
+Updating the Project
+
+To download the latest repository changes:
+
+cd ~/termux-db-wizard
+git pull
 chmod +x install.sh
 ./install.sh
-```
 
-The installer copies the wizard to `~/dbwizard`, installs `pma` and `dbw` commands in `~/bin`, and adds `~/bin` to PATH.
+Your existing "~/dbwizard/config.php" is preserved by the installer.
 
-If `git` is not installed, download the repository ZIP from GitHub, extract it, open the extracted folder in Termux, and run `./install.sh`.
+Troubleshooting
 
-## MariaDB first-time setup
+1. mysqli extension is missing
 
-If MariaDB is not initialized yet, run:
-
-```bash
-mariadb-install-db
-```
-
-Start MariaDB using the service command available in your Termux installation. Commonly:
-
-```bash
-mysqld_safe &
-```
-
-Test the connection:
-
-```bash
-mariadb -h 127.0.0.1 -P 3306 -u root -e "SELECT VERSION();"
-```
-
-The wizard expects MariaDB to accept local TCP connections at `127.0.0.1:3306` as `root`. If your root account has a password, edit `~/dbwizard/config.php` and set it there.
-
-## Commands
-
-### Database Wizard
-
-```bash
-dbw on       # start wizard and open browser
-dbw off      # stop wizard
-dbw status   # check status
-dbw open     # open browser
-dbw log      # show recent log
-```
-
-Wizard URL: `http://127.0.0.1:8082`
-
-### phpMyAdmin (optional)
-
-If phpMyAdmin exists in `~/phpmyadmin`:
-
-```bash
-pma on
-pma off
-pma restart
-pma status
-pma open
-pma log
-```
-
-phpMyAdmin URL: `http://127.0.0.1:8081`
-
-## Change the wizard admin password
-
-Edit:
-
-```bash
-nano ~/dbwizard/config.php
-```
-
-Set a strong password in `$admin_password`. Do not commit your personal password to GitHub.
-
-## Change MariaDB connection details
-
-In the same `config.php` file, update:
-
-- `$db_host`
-- `$db_port`
-- `$db_admin_user`
-- `$db_admin_password`
-
-## Backups
-
-Before deleting a database, export it in phpMyAdmin or use:
-
-```bash
-mariadb-dump -h 127.0.0.1 -P 3306 -u root DATABASE_NAME > backup.sql
-```
-
-If root has a password, add `-p` and enter it when prompted.
-
-## Security notes
-
-- The panel binds only to `127.0.0.1`; it is intended for the same phone.
-- Change the default wizard admin password immediately after installation.
-- Keep MariaDB and the wizard off when not in use.
-- Never upload `config.php` containing passwords to GitHub.
-- The wizard does not create remote users; database users are restricted to `localhost`.
-- Deleting a database or user is irreversible unless you have a backup.
-
-## Troubleshooting
-
-### `mysqli` extension missing
-
-Check:
-
-```bash
 php -m | grep -i mysqli
-```
 
-If it is missing, install/enable the appropriate PHP MySQL extension for your Termux package version.
+Make sure PHP's MySQLi extension is installed and enabled.
 
-### Wizard cannot connect to MariaDB
+2. Database connection failed
 
-Check MariaDB is running and test:
+Check whether MariaDB is running:
 
-```bash
 mariadb -h 127.0.0.1 -P 3306 -u root -e "SELECT VERSION();"
-```
 
-Then update `~/dbwizard/config.php` to match your MariaDB root credentials.
+Check your settings in:
 
-### Address already in use
+nano ~/dbwizard/config.php
 
-Check the service status and stop the previous process:
+3. Address already in use
 
-```bash
 dbw status
 dbw off
 dbw on
-```
 
-## License
+Security Notice
 
-MIT. See [LICENSE](LICENSE).
+- This project is designed for local development on your own Android device.
+- The web panel binds to "127.0.0.1" only.
+- Do not expose the panel to the public internet.
+- Change the default admin password immediately.
+- Never share your database root password.
+- Always back up important databases before deleting them.
+- Database deletion permanently removes its data.
+
+This is a lightweight personal development tool inspired by cPanel's database workflow. It is not an official cPanel product or a full replacement for cPanel.
+
+Developer
+
+Developed by TZ Mamun
+
+GitHub: https://github.com/tzalmamun
+
+Repository: https://github.com/tzalmamun/termux-db-wizard
+
+License
+
+This project is licensed under the MIT License.
+
+See the "LICENSE" (LICENSE) file for details.
+
+---
+
+If you find this project useful, please give it a ⭐ Star on GitHub!
