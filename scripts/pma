@@ -1,0 +1,26 @@
+#!/data/data/com.termux/files/usr/bin/bash
+URL="http://127.0.0.1:8081"
+DIR="$HOME/phpmyadmin"
+PIDFILE="$HOME/.pma.pid"
+LOG="$HOME/pma.log"
+case "${1:-help}" in
+  on|start)
+    if ! curl -fsS --max-time 2 "$URL" >/dev/null 2>&1; then
+      [ -d "$DIR" ] || { echo "phpMyAdmin folder not found: $DIR"; exit 1; }
+      cd "$DIR" || exit 1
+      php -S 127.0.0.1:8081 -t "$DIR" >>"$LOG" 2>&1 &
+      echo $! > "$PIDFILE"
+      sleep 2
+    fi
+    if command -v termux-open-url >/dev/null 2>&1; then termux-open-url "$URL"; else echo "$URL"; fi
+    ;;
+  off|stop)
+    if [ -f "$PIDFILE" ]; then kill "$(cat "$PIDFILE")" 2>/dev/null || true; rm -f "$PIDFILE"; fi
+    echo "Stop requested. Check with: pma status"
+    ;;
+  restart) "$0" off; sleep 1; "$0" on ;;
+  status) if curl -fsS --max-time 2 "$URL" >/dev/null 2>&1; then echo "ON - $URL"; else echo "OFF"; fi ;;
+  open) if command -v termux-open-url >/dev/null 2>&1; then termux-open-url "$URL"; else echo "$URL"; fi ;;
+  log) tail -n 50 "$LOG" 2>/dev/null || echo "No log yet." ;;
+  *) echo "pma on | off | restart | status | open | log" ;;
+esac
