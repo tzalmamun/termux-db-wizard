@@ -1,1 +1,0 @@
-# termux-db-wizard
