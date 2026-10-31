@@ -1,0 +1,38 @@
+#!/data/data/com.termux/files/usr/bin/bash
+URL="http://127.0.0.1:8082"
+DIR="$HOME/dbwizard"
+PIDFILE="$HOME/.dbwizard.pid"
+LOG="$HOME/dbwizard.log"
+
+start_server() {
+  if curl -fsS --max-time 2 "$URL" >/dev/null 2>&1; then
+    echo "Database Wizard is already ON."
+  else
+    [ -f "$DIR/index.php" ] || { echo "Wizard files not found in $DIR"; exit 1; }
+    cd "$DIR" || exit 1
+    php -S 127.0.0.1:8082 -t "$DIR" >>"$LOG" 2>&1 &
+    echo $! > "$PIDFILE"
+    sleep 2
+    if ! curl -fsS --max-time 2 "$URL" >/dev/null 2>&1; then
+      echo "Could not start. Check: dbw log"
+      exit 1
+    fi
+    echo "Database Wizard started."
+  fi
+  if command -v termux-open-url >/dev/null 2>&1; then termux-open-url "$URL"; else echo "$URL"; fi
+}
+stop_server() {
+  if [ -f "$PIDFILE" ]; then
+    kill "$(cat "$PIDFILE")" 2>/dev/null || true
+    rm -f "$PIDFILE"
+  fi
+  echo "Stop requested. If still ON, inspect: dbw status"
+}
+case "${1:-help}" in
+  on|start) start_server ;;
+  off|stop) stop_server ;;
+  status) if curl -fsS --max-time 2 "$URL" >/dev/null 2>&1; then echo "ON - $URL"; else echo "OFF"; fi ;;
+  open) if command -v termux-open-url >/dev/null 2>&1; then termux-open-url "$URL"; else echo "$URL"; fi ;;
+  log) tail -n 50 "$LOG" 2>/dev/null || echo "No log yet." ;;
+  *) echo "dbw on | off | status | open | log" ;;
+esac
